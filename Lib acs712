@@ -1,18 +1,66 @@
+/*
+  ACS712 + Arduino Nano
+  Reads current and prints to Serial Monitor
 
-const int analogInPin = A0;  // Analog input pin
-const float sensitivity = 0.185;  // Sensitivity factor for ACS712-05 (185 mV/A)
+  Wiring:
+  ACS712 VCC  -> 5V
+  ACS712 GND  -> GND
+  ACS712 OUT  -> A0
+
+  Versions:
+  5A  = 185 mV/A
+  20A = 100 mV/A
+  30A = 66 mV/A
+*/
+
+const int sensorPin = A0;
+
+// Change according to your module
+float sensitivity = 0.185;   // 5A version
+// float sensitivity = 0.100; // 20A version
+// float sensitivity = 0.066; // 30A version
+
+float zeroCurrentVoltage = 2.5;   // ACS712 midpoint at 5V supply
+float adcResolution = 1023.0;
+float referenceVoltage = 5.0;
 
 void setup() {
-  Serial.begin(9600);  // Initialize serial communication
+  Serial.begin(9600);
+  Serial.println("ACS712 Current Sensor - Arduino Nano");
 }
 
 void loop() {
-  int sensorValue = analogRead(analogInPin);
-  float current = ((sensorValue - 512) * (5.0 / 1023.0)) / sensitivity;
+  long sum = 0;
 
-  Serial.print("Current (ACS712-05): ");
-  Serial.print(current);
+  // Average 100 samples for stable reading
+  for (int i = 0; i < 100; i++) {
+    sum += analogRead(sensorPin);
+    delay(2);
+  }
+
+  float adcValue = sum / 100.0;
+
+  // Convert ADC to voltage
+  float voltage = (adcValue * referenceVoltage) / adcResolution;
+
+  // Current calculation
+  float current = (voltage - zeroCurrentVoltage) / sensitivity;
+
+  // Remove tiny noise near zero
+  if (current > -0.05 && current < 0.05) {
+    current = 0.0;
+  }
+
+  Serial.print("ADC: ");
+  Serial.print(adcValue);
+
+  Serial.print(" | Voltage: ");
+  Serial.print(voltage, 3);
+  Serial.print(" V");
+
+  Serial.print(" | Current: ");
+  Serial.print(current, 3);
   Serial.println(" A");
 
-  delay(1000);  // Delay for readability (adjust as needed)
+  delay(500);
 }
