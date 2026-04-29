@@ -1,0 +1,18 @@
+
+const int analogInPin = A0;  // Analog input pin
+const float sensitivity = 0.185;  // Sensitivity factor for ACS712-05 (185 mV/A)
+
+void setup() {
+  Serial.begin(9600);  // Initialize serial communication
+}
+
+void loop() {
+  int sensorValue = analogRead(analogInPin);
+  float current = ((sensorValue - 512) * (5.0 / 1023.0)) / sensitivity;
+
+  Serial.print("Current (ACS712-05): ");
+  Serial.print(current);
+  Serial.println(" A");
+
+  delay(1000);  // Delay for readability (adjust as needed)
+}
